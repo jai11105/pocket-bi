@@ -26,7 +26,7 @@ export async function GET() {
   const supabase = getSupabase()
   const { data, error } = await supabase
     .from('transactions')
-    .select('id, user_id, date, type, category, amount, cost_price, quantity')
+    .select('id, user_id, date, type, category, item_name, channel, amount, cost_price, quantity, notes')
     .order('date', { ascending: false })
 
   if (error) {
