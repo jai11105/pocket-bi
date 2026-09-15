@@ -63,12 +63,11 @@ export async function POST(request: Request) {
     .insert({
       date: body.date,
       category: body.category,
-      region: body.region || 'Global',
       quantity: body.units || 1,
       amount: body.revenue || 0,
       cost_price: body.cost || 0,
     })
-    .select('id, user_id, date, type, category, amount, cost_price, quantity, region')
+    .select('id, user_id, date, type, category, amount, cost_price, quantity')
     .single()
 
   if (error) {
