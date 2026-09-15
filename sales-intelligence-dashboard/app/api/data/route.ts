@@ -62,10 +62,14 @@ export async function POST(request: Request) {
     .from('transactions')
     .insert({
       date: body.date,
+      type: body.type === 'Expense' ? 'expense' : 'sale',
       category: body.category,
-      quantity: body.units || 1,
-      amount: body.revenue || 0,
-      cost_price: body.cost || 0,
+      item_name: body.item_name,
+      channel: body.channel,
+      quantity: body.quantity || 1,
+      amount: body.amount || 0,
+      cost_price: body.cost_price || 0,
+      notes: body.notes,
     })
     .select('id, user_id, date, type, category, amount, cost_price, quantity')
     .single()

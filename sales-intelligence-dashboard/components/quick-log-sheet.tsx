@@ -2,8 +2,23 @@
 
 import { useState } from 'react'
 import { Loader2, X } from 'lucide-react'
-import { CATEGORIES, REGIONS, type Transaction } from '@/lib/types'
 import { cn } from '@/lib/utils'
+
+const CATEGORIES = ['Grocery', 'Vegetables', 'Tea/Tiffin', 'Petrol', 'Rent'] as const
+const CHANNELS = ['Counter', 'Online', 'WhatsApp', 'Mandi'] as const
+const TYPES = ['Sale', 'Expense'] as const
+
+type FormTransaction = {
+  date: string
+  category: string
+  type: string
+  item_name: string
+  channel: string
+  quantity: number
+  amount: number
+  cost_price: number
+  notes: string
+}
 
 const today = () => new Date().toISOString().split('T')[0]
 
@@ -14,20 +29,33 @@ export function QuickLogSheet({
 }: {
   open: boolean
   onClose: () => void
-  onSubmit: (t: Omit<Transaction, 'record_id'>) => Promise<void>
+  onSubmit: (t: FormTransaction) => Promise<void>
 }) {
   const [form, setForm] = useState({
     date: today(),
-    category: CATEGORIES[0] as string,
-    region: REGIONS[0] as string,
-    units: '1',
-    revenue: '',
-    cost: '',
+    category: CATEGORIES[0],
+    type: TYPES[0],
+    item_name: '',
+    channel: CHANNELS[0],
+    quantity: '1',
+    amount: '',
+    cost_price: '',
+    notes: '',
   })
   const [submitting, setSubmitting] = useState(false)
 
   function reset() {
-    setForm({ date: today(), category: CATEGORIES[0], region: REGIONS[0], units: '1', revenue: '', cost: '' })
+    setForm({
+      date: today(),
+      category: CATEGORIES[0],
+      type: TYPES[0],
+      item_name: '',
+      channel: CHANNELS[0],
+      quantity: '1',
+      amount: '',
+      cost_price: '',
+      notes: '',
+    })
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -37,10 +65,13 @@ export function QuickLogSheet({
       await onSubmit({
         date: form.date,
         category: form.category,
-        region: form.region,
-        units: Number(form.units) || 1,
-        revenue: Number(form.revenue) || 0,
-        cost: Number(form.cost) || 0,
+        type: form.type,
+        item_name: form.item_name,
+        channel: form.channel,
+        quantity: Number(form.quantity) || 1,
+        amount: Number(form.amount) || 0,
+        cost_price: Number(form.cost_price) || 0,
+        notes: form.notes,
       })
       reset()
       onClose()
@@ -93,55 +124,89 @@ export function QuickLogSheet({
                 ))}
               </select>
             </Field>
-            <Field label="Region">
+            <Field label="Transaction Type">
               <select
-                value={form.region}
-                onChange={(e) => setForm({ ...form, region: e.target.value })}
+                value={form.type}
+                onChange={(e) => setForm({ ...form, type: e.target.value })}
                 className={inputCls}
               >
-                {REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
                   </option>
                 ))}
               </select>
             </Field>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <Field label="Units">
+          <Field label="Item Name">
+            <input
+              type="text"
+              value={form.item_name}
+              onChange={(e) => setForm({ ...form, item_name: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Channel">
+              <select
+                value={form.channel}
+                onChange={(e) => setForm({ ...form, channel: e.target.value })}
+                className={inputCls}
+              >
+                {CHANNELS.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Quantity">
               <input
                 type="number"
                 inputMode="numeric"
                 min="0"
-                value={form.units}
-                onChange={(e) => setForm({ ...form, units: e.target.value })}
-                className={inputCls}
-              />
-            </Field>
-            <Field label="Revenue">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                placeholder="0"
-                value={form.revenue}
-                onChange={(e) => setForm({ ...form, revenue: e.target.value })}
-                className={inputCls}
-              />
-            </Field>
-            <Field label="Cost">
-              <input
-                type="number"
-                inputMode="decimal"
-                min="0"
-                placeholder="0"
-                value={form.cost}
-                onChange={(e) => setForm({ ...form, cost: e.target.value })}
+                value={form.quantity}
+                onChange={(e) => setForm({ ...form, quantity: e.target.value })}
                 className={inputCls}
               />
             </Field>
           </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Amount">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="0"
+                value={form.amount}
+                onChange={(e) => setForm({ ...form, amount: e.target.value })}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Cost Price">
+              <input
+                type="number"
+                inputMode="decimal"
+                min="0"
+                placeholder="0"
+                value={form.cost_price}
+                onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          <Field label="Notes">
+            <textarea
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              className={inputCls}
+              rows={3}
+            />
+          </Field>
 
           <button
             type="submit"
