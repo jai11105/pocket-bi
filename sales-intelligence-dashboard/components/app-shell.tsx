@@ -41,7 +41,7 @@ export function AppShell() {
         profit: Math.round(d.profit),
         margin_pct: d.revenue > 0 ? Number(((d.profit / d.revenue) * 100).toFixed(1)) : 0,
       })),
-      by_region: buildBreakdown(filtered, 'region').map((d) => ({
+      by_channel: buildBreakdown(filtered, 'channel').map((d) => ({
         name: d.name,
         revenue: Math.round(d.revenue),
         profit: Math.round(d.profit),

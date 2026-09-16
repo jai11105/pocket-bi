@@ -26,8 +26,8 @@ export function filterByTimeframe(txns: Transaction[], tf: Timeframe, now = new 
 }
 
 export function computeMetrics(txns: Transaction[]): Metrics {
-  const totalRevenue = txns.reduce((s, t) => s + (t.revenue || 0), 0)
-  const totalCost = txns.reduce((s, t) => s + (t.cost || 0), 0)
+  const totalRevenue = txns.reduce((s, t) => s + (t.amount || 0), 0)
+  const totalCost = txns.reduce((s, t) => s + (t.cost_price || 0), 0)
   const grossProfit = totalRevenue - totalCost
   const volume = txns.length
   return {
@@ -82,8 +82,8 @@ export function buildTimeSeries(txns: Transaction[]): SeriesPoint[] {
   for (const t of txns) {
     const key = t.date
     const existing = map.get(key) ?? { date: key, revenue: 0, cost: 0, profit: 0 }
-    existing.revenue += t.revenue || 0
-    existing.cost += t.cost || 0
+    existing.revenue += t.amount || 0
+    existing.cost += t.cost_price || 0
     existing.profit = existing.revenue - existing.cost
     map.set(key, existing)
   }
@@ -92,13 +92,13 @@ export function buildTimeSeries(txns: Transaction[]): SeriesPoint[] {
 
 export type BreakdownPoint = { name: string; revenue: number; profit: number }
 
-export function buildBreakdown(txns: Transaction[], key: 'category' | 'region'): BreakdownPoint[] {
+export function buildBreakdown(txns: Transaction[], key: 'category' | 'channel'): BreakdownPoint[] {
   const map = new Map<string, BreakdownPoint>()
   for (const t of txns) {
     const name = t[key]
     const existing = map.get(name) ?? { name, revenue: 0, profit: 0 }
-    existing.revenue += t.revenue || 0
-    existing.profit += (t.revenue || 0) - (t.cost || 0)
+    existing.revenue += t.amount || 0
+    existing.profit += (t.amount || 0) - (t.cost_price || 0)
     map.set(name, existing)
   }
   return [...map.values()].sort((a, b) => b.revenue - a.revenue)

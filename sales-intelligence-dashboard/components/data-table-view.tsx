@@ -6,7 +6,20 @@ import { formatCurrency } from '@/lib/analytics'
 import type { Transaction } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
-type SortKey = 'date' | 'category' | 'region' | 'revenue' | 'cost' | 'profit'
+type TableRow = {
+  record_id: string
+  date: string
+  type: string
+  category: string
+  item_name: string
+  channel: string
+  quantity: number
+  amount: number
+  cost_price: number
+  notes: string
+}
+
+type SortKey = 'date' | 'type' | 'category' | 'item_name' | 'channel' | 'quantity' | 'amount' | 'cost_price' | 'profit'
 
 export function DataTableView({ transactions }: { transactions: Transaction[] }) {
   const [query, setQuery] = useState('')
@@ -14,15 +27,18 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
   const [dir, setDir] = useState<'asc' | 'desc'>('desc')
 
   const rows = useMemo(() => {
+    const tableRows = transactions as TableRow[]
     const q = query.trim().toLowerCase()
-    const filtered = transactions.filter(
+    const filtered = tableRows.filter(
       (t) =>
         !q ||
         t.record_id.toLowerCase().includes(q) ||
+        t.type.toLowerCase().includes(q) ||
         t.category.toLowerCase().includes(q) ||
-        t.region.toLowerCase().includes(q),
+        (t.item_name ?? '').toLowerCase().includes(q) ||
+        (t.channel ?? '').toLowerCase().includes(q),
     )
-    const withProfit = filtered.map((t) => ({ ...t, profit: t.revenue - t.cost }))
+    const withProfit = filtered.map((t) => ({ ...t, profit: t.amount - t.cost_price }))
     withProfit.sort((a, b) => {
       const av = a[sortKey]
       const bv = b[sortKey]
@@ -38,7 +54,11 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
     if (sortKey === key) setDir(dir === 'asc' ? 'desc' : 'asc')
     else {
       setSortKey(key)
-      setDir(key === 'date' || key === 'category' || key === 'region' ? 'asc' : 'desc')
+      setDir(
+        key === 'date' || key === 'type' || key === 'category' || key === 'item_name' || key === 'channel'
+          ? 'asc'
+          : 'desc',
+      )
     }
   }
 
@@ -55,7 +75,7 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search id, category, region…"
+          placeholder="Search id, type, category, item, channel…"
           className="w-full rounded-xl border border-input bg-card py-2.5 pl-9 pr-3 text-sm text-foreground outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
         />
       </div>
@@ -66,9 +86,13 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
             <thead>
               <tr className="border-b border-border/60 text-muted-foreground">
                 <Th onClick={() => toggleSort('date')} active={sortKey === 'date'}>Date</Th>
+                <Th onClick={() => toggleSort('type')} active={sortKey === 'type'}>Type</Th>
                 <Th onClick={() => toggleSort('category')} active={sortKey === 'category'}>Category</Th>
-                <Th onClick={() => toggleSort('region')} active={sortKey === 'region'}>Region</Th>
-                <Th onClick={() => toggleSort('revenue')} active={sortKey === 'revenue'} align="right">Rev</Th>
+                <Th onClick={() => toggleSort('item_name')} active={sortKey === 'item_name'}>Item</Th>
+                <Th onClick={() => toggleSort('channel')} active={sortKey === 'channel'}>Channel</Th>
+                <Th onClick={() => toggleSort('quantity')} active={sortKey === 'quantity'} align="right">Qty</Th>
+                <Th onClick={() => toggleSort('amount')} active={sortKey === 'amount'} align="right">Amount</Th>
+                <Th onClick={() => toggleSort('cost_price')} active={sortKey === 'cost_price'} align="right">Cost</Th>
                 <Th onClick={() => toggleSort('profit')} active={sortKey === 'profit'} align="right">Profit</Th>
               </tr>
             </thead>
@@ -78,10 +102,18 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
                   <td className="whitespace-nowrap px-3 py-2.5 text-muted-foreground">
                     {new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </td>
+                  <td className="px-3 py-2.5 text-card-foreground">{t.type}</td>
                   <td className="px-3 py-2.5 text-card-foreground">{t.category}</td>
-                  <td className="px-3 py-2.5 text-muted-foreground">{t.region}</td>
+                  <td className="px-3 py-2.5 text-card-foreground">{t.item_name}</td>
+                  <td className="px-3 py-2.5 text-muted-foreground">{t.channel}</td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-card-foreground">
-                    {formatCurrency(t.revenue, true)}
+                    {t.quantity}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-card-foreground">
+                    {formatCurrency(t.amount, true)}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-card-foreground">
+                    {formatCurrency(t.cost_price, true)}
                   </td>
                   <td
                     className={cn(
@@ -95,7 +127,7 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
                     No matching records.
                   </td>
                 </tr>

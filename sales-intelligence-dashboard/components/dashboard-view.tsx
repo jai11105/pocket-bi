@@ -38,7 +38,7 @@ export function DashboardView({
   const trends = useMemo(() => computeTrends(transactions, timeframe), [transactions, timeframe])
   const series = useMemo(() => buildTimeSeries(filtered), [filtered])
   const byCategory = useMemo(() => buildBreakdown(filtered, 'category'), [filtered])
-  const byRegion = useMemo(() => buildBreakdown(filtered, 'region'), [filtered])
+  const byChannel = useMemo(() => buildBreakdown(filtered, 'channel'), [filtered])
 
   return (
     <div className="space-y-4">
@@ -71,7 +71,7 @@ export function DashboardView({
           <KpiCarousel metrics={metrics} trends={trends} />
           <InsightCard insight={aiInsight} />
           <TrendChart data={series} />
-          <BreakdownChart byCategory={byCategory} byRegion={byRegion} />
+          <BreakdownChart byCategory={byCategory} byChannel={byChannel} />
         </>
       )}
     </div>

@@ -15,7 +15,7 @@ type Context = {
   }
   trends_vs_previous_period_pct: { revenue: number; profit: number; margin: number; volume: number }
   by_category: Breakdown[]
-  by_region: Breakdown[]
+  by_channel: Breakdown[]
 }
 
 const money = (n: number) =>
@@ -49,17 +49,17 @@ export function localCopilotAnswer(question: string, ctx: Context): string {
   const q = question.toLowerCase()
   const ta = isTanglish(q)
   const period = (ta ? TIMEFRAME_LABEL_TA : TIMEFRAME_LABEL)[ctx.timeframe] ?? ctx.timeframe
-  const dim = /region|idam|edam/.test(q) ? 'region' : /categor|product|vagai/.test(q) ? 'category' : null
-  const list = (d: 'region' | 'category') => (d === 'region' ? ctx.by_region : ctx.by_category)
-  const dimTa = (d: 'region' | 'category') => (d === 'region' ? 'region' : 'category')
+  const dim = /channel|counter|online|whatsapp|mandi/.test(q) ? 'channel' : /categor|product|vagai/.test(q) ? 'category' : null
+  const list = (d: 'channel' | 'category') => (d === 'channel' ? ctx.by_channel : ctx.by_category)
+  const dimTa = (d: 'channel' | 'category') => (d === 'channel' ? 'channel' : 'category')
 
   // Lowest / worst margin
   if (
-    /(lowest|worst|weakest|smallest|mosam|kammi).*(margin|profit|region|categor|laabam|sales)|(margin|profit|laabam).*(lowest|worst|weakest|mosam|kammi)/.test(
+    /(lowest|worst|weakest|smallest|mosam|kammi).*(margin|profit|channel|categor|laabam|sales)|(margin|profit|laabam).*(lowest|worst|weakest|mosam|kammi)/.test(
       q,
     )
   ) {
-    const d = dim ?? 'region'
+    const d = dim ?? 'channel'
     const items = [...list(d)].sort((a, b) => a.margin_pct - b.margin_pct)
     const w = items[0]
     if (!w) return noData(ta)
@@ -79,7 +79,7 @@ export function localCopilotAnswer(question: string, ctx: Context): string {
 
   // Highest / best margin or performer
   if (
-    /(highest|best|top|strongest|most profitable|nalla|adhigam).*(margin|profit|perform|categor|region|product|laabam|sales)/.test(
+    /(highest|best|top|strongest|most profitable|nalla|adhigam).*(margin|profit|perform|channel|categor|product|laabam|sales)/.test(
       q,
     )
   ) {
@@ -140,7 +140,7 @@ export function localCopilotAnswer(question: string, ctx: Context): string {
       `- Revenue ${signed(t.revenue)} vs the previous period`,
       `- Gross profit ${money(ctx.metrics.gross_profit)} (${signed(t.profit)})`,
       `- ${ctx.metrics.transaction_count} transactions, avg ${money(ctx.metrics.avg_transaction_value)}`,
-      `Recommended action: keep momentum where revenue is growing and shore up any declining ${ctx.by_region[0] ? 'regions' : 'lines'}.`,
+      `Recommended action: keep momentum where revenue is growing and shore up any declining ${ctx.by_channel[0] ? 'channels' : 'lines'}.`,
     ].join('\n')
   }
 
@@ -150,7 +150,7 @@ export function localCopilotAnswer(question: string, ctx: Context): string {
       `${period} oda quick snapshot itho mame.`,
       `- Revenue: ${money(ctx.metrics.total_revenue)} (${signed(ctx.trends_vs_previous_period_pct.revenue)})`,
       `- Gross profit: ${money(ctx.metrics.gross_profit)}, margin ${ctx.metrics.profit_margin_pct}%`,
-      `- Top category: ${ctx.by_category[0]?.name ?? 'n/a'}; top region: ${ctx.by_region[0]?.name ?? 'n/a'}`,
+      `- Top category: ${ctx.by_category[0]?.name ?? 'n/a'}; top region: ${ctx.by_channel[0]?.name ?? 'n/a'}`,
       `Panna vendiyathu: oru specific region, category, margin illa cost pathi kelunga, detail-a solren.`,
     ].join('\n')
   }
@@ -158,7 +158,7 @@ export function localCopilotAnswer(question: string, ctx: Context): string {
     `Here is a snapshot for ${period}.`,
     `- Revenue: ${money(ctx.metrics.total_revenue)} (${signed(ctx.trends_vs_previous_period_pct.revenue)})`,
     `- Gross profit: ${money(ctx.metrics.gross_profit)} at ${ctx.metrics.profit_margin_pct}% margin`,
-    `- Top category: ${ctx.by_category[0]?.name ?? 'n/a'}; top region: ${ctx.by_region[0]?.name ?? 'n/a'}`,
+    `- Top category: ${ctx.by_category[0]?.name ?? 'n/a'}; top region: ${ctx.by_channel[0]?.name ?? 'n/a'}`,
     `Recommended action: ask about a specific region, category, margin, or cost for a focused analysis.`,
   ].join('\n')
 }

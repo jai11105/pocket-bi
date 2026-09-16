@@ -14,11 +14,14 @@ function mapSupabaseToTransaction(row: any): Transaction {
   return {
     record_id: row.id,
     date: row.date,
-    category: row.category || row.type || 'General',
-    region: row.region || 'Global',
-    units: row.quantity || 1,
-    revenue: row.amount || 0,
-    cost: row.cost_price || 0,
+    type: row.type,
+    category: row.category,
+    item_name: row.item_name,
+    channel: row.channel,
+    quantity: row.quantity,
+    amount: row.amount,
+    cost_price: row.cost_price,
+    notes: row.notes,
   }
 }
 

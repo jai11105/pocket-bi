@@ -31,7 +31,17 @@ export function QuickLogSheet({
   onClose: () => void
   onSubmit: (t: FormTransaction) => Promise<void>
 }) {
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<{
+    date: string
+    category: string
+    type: string
+    item_name: string
+    channel: string
+    quantity: string
+    amount: string
+    cost_price: string
+    notes: string
+  }>({
     date: today(),
     category: CATEGORIES[0],
     type: TYPES[0],

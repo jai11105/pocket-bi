@@ -1,11 +1,14 @@
 export type Transaction = {
   record_id: string
   date: string // YYYY-MM-DD
+  type: string
   category: string
-  region: string
-  units: number
-  revenue: number
-  cost: number
+  item_name: string
+  channel: string
+  quantity: number
+  amount: number
+  cost_price: number
+  notes: string
 }
 
 export type Metrics = {
@@ -35,11 +38,11 @@ export type DataResponse = {
 export type Timeframe = 'today' | '7d' | '30d' | 'all'
 
 export const CATEGORIES = [
-  'Enterprise SaaS',
-  'SMB Subscriptions',
-  'Professional Services',
-  'Marketplace',
-  'Hardware',
+  'Grocery',
+  'Vegetables',
+  'Tea/Tiffin',
+  'Petrol',
+  'Rent',
 ] as const
 
-export const REGIONS = ['North America', 'EMEA', 'APAC', 'LATAM'] as const
+export const CHANNELS = ['Counter', 'Online', 'WhatsApp', 'Mandi'] as const

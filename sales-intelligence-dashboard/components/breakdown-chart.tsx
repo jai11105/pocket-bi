@@ -28,13 +28,13 @@ function BreakdownTooltip({ active, payload }: any) {
 
 export function BreakdownChart({
   byCategory,
-  byRegion,
+  byChannel,
 }: {
   byCategory: BreakdownPoint[]
-  byRegion: BreakdownPoint[]
+  byChannel: BreakdownPoint[]
 }) {
-  const [view, setView] = useState<'category' | 'region'>('category')
-  const data = view === 'category' ? byCategory : byRegion
+  const [view, setView] = useState<'category' | 'channel'>('category')
+  const data = view === 'category' ? byCategory : byChannel
   const total = data.reduce((s, d) => s + d.revenue, 0)
 
   return (
@@ -42,7 +42,7 @@ export function BreakdownChart({
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-card-foreground">Revenue breakdown</h3>
         <div className="inline-flex rounded-full border border-border/60 p-0.5 text-[11px] font-semibold">
-          {(['category', 'region'] as const).map((v) => (
+          {(['category', 'channel'] as const).map((v) => (
             <button
               key={v}
               type="button"
