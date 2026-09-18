@@ -30,13 +30,16 @@ export function TrendChart({ data }: { data: SeriesPoint[] }) {
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-card-foreground">Revenue vs Cost</h3>
+        <h3 className="text-sm font-semibold text-card-foreground">Sales vs Buying Cost</h3>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-chart-1" /> Revenue
+            <span className="h-2 w-2 rounded-full bg-chart-1" /> Sales
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-full bg-chart-3" /> Cost
+            <span className="h-2 w-2 rounded-full bg-chart-3" /> Buying Cost
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-chart-2" /> Product Profit
           </span>
         </div>
       </div>
@@ -44,7 +47,7 @@ export function TrendChart({ data }: { data: SeriesPoint[] }) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 4, right: 4, left: -18, bottom: 0 }}>
             <defs>
-              <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.45} />
                 <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
               </linearGradient>
@@ -72,17 +75,24 @@ export function TrendChart({ data }: { data: SeriesPoint[] }) {
             <Tooltip content={<TrendTooltip />} />
             <Area
               type="monotone"
-              dataKey="revenue"
+              dataKey="sales"
               stroke="var(--chart-1)"
               strokeWidth={2}
-              fill="url(#revFill)"
+              fill="url(#salesFill)"
             />
             <Area
               type="monotone"
-              dataKey="cost"
+              dataKey="buyingCost"
               stroke="var(--chart-3)"
               strokeWidth={2}
               fill="url(#costFill)"
+            />
+            <Area
+              type="monotone"
+              dataKey="profit"
+              stroke="var(--chart-2)"
+              strokeWidth={2}
+              fill={undefined}
             />
           </AreaChart>
         </ResponsiveContainer>

@@ -1,4 +1,38 @@
-import type { Metrics, Timeframe, Transaction } from './types'
+import type { Metrics, Timeframe, Transaction, TransactionInput } from './types'
+
+export function roundMoney(n: number): number {
+  const v = Number(n) || 0
+  return Math.round(v * 100) / 100
+}
+
+function qty(v: unknown): number {
+  const n = Number(v)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1
+}
+
+export function calcTransactionTotals(input: TransactionInput): {
+  amount: number
+  cost_price: number
+  quantity: number
+} {
+  const quantity = qty(input.quantity)
+  const buyingPrice = Number(input.buying_price) || 0
+  const sellingPrice = Number(input.selling_price) || 0
+  switch (input.type) {
+    case 'sale':
+      return {
+        amount: roundMoney(sellingPrice * quantity),
+        cost_price: roundMoney(buyingPrice * quantity),
+        quantity,
+      }
+    case 'purchase':
+      return { amount: 0, cost_price: roundMoney(buyingPrice * quantity), quantity }
+    case 'expense':
+      return { amount: roundMoney(Number(input.amount) || 0), cost_price: 0, quantity: 1 }
+    default:
+      return { amount: 0, cost_price: 0, quantity }
+  }
+}
 
 export function startOfTimeframe(tf: Timeframe, now = new Date()): Date | null {
   const d = new Date(now)
@@ -26,17 +60,23 @@ export function filterByTimeframe(txns: Transaction[], tf: Timeframe, now = new 
 }
 
 export function computeMetrics(txns: Transaction[]): Metrics {
-  const totalRevenue = txns.reduce((s, t) => s + (t.amount || 0), 0)
-  const totalCost = txns.reduce((s, t) => s + (t.cost_price || 0), 0)
-  const grossProfit = totalRevenue - totalCost
+  const sales = txns.filter((t) => t.type === 'sale')
+  const expenses = txns.filter((t) => t.type === 'expense')
+  const totalSales = sales.reduce((s, t) => s + (t.amount || 0), 0)
+  const totalBuyingCost = sales.reduce((s, t) => s + (t.cost_price || 0), 0)
+  const productProfit = totalSales - totalBuyingCost
+  const expensesTotal = expenses.reduce((s, t) => s + (t.amount || 0), 0)
   const volume = txns.length
+  const saleCount = sales.length
   return {
-    totalRevenue,
-    totalCost,
-    grossProfit,
-    profitMargin: totalRevenue > 0 ? grossProfit / totalRevenue : 0,
+    sales: roundMoney(totalSales),
+    buyingCost: roundMoney(totalBuyingCost),
+    productProfit: roundMoney(productProfit),
+    profitPct: totalSales > 0 ? productProfit / totalSales : 0,
+    expenses: roundMoney(expensesTotal),
+    netProfit: roundMoney(productProfit - expensesTotal),
     volume,
-    avgTransactionValue: volume > 0 ? totalRevenue / volume : 0,
+    avgTransactionValue: roundMoney(saleCount > 0 ? totalSales / saleCount : 0),
   }
 }
 
@@ -46,7 +86,7 @@ export function computeTrends(txns: Transaction[], tf: Timeframe, now = new Date
   if (!start) {
     // For "all" compare last half vs first half by date span.
     const sorted = [...txns].sort((a, b) => a.date.localeCompare(b.date))
-    if (sorted.length < 2) return { revenue: 0, profit: 0, margin: 0, volume: 0 }
+    if (sorted.length < 2) return { sales: 0, profit: 0, margin: 0, volume: 0 }
     const mid = Math.floor(sorted.length / 2)
     return diffMetrics(computeMetrics(sorted.slice(mid)), computeMetrics(sorted.slice(0, mid)))
   }
@@ -68,40 +108,49 @@ function pct(curr: number, prev: number): number {
 
 function diffMetrics(curr: Metrics, prev: Metrics) {
   return {
-    revenue: pct(curr.totalRevenue, prev.totalRevenue),
-    profit: pct(curr.grossProfit, prev.grossProfit),
-    margin: (curr.profitMargin - prev.profitMargin) * 100,
+    sales: pct(curr.sales, prev.sales),
+    profit: pct(curr.productProfit, prev.productProfit),
+    margin: (curr.profitPct - prev.profitPct) * 100,
     volume: pct(curr.volume, prev.volume),
   }
 }
 
-export type SeriesPoint = { date: string; revenue: number; cost: number; profit: number }
+export type SeriesPoint = { date: string; sales: number; buyingCost: number; profit: number }
 
 export function buildTimeSeries(txns: Transaction[]): SeriesPoint[] {
   const map = new Map<string, SeriesPoint>()
   for (const t of txns) {
+    if (t.type !== 'sale') continue
     const key = t.date
-    const existing = map.get(key) ?? { date: key, revenue: 0, cost: 0, profit: 0 }
-    existing.revenue += t.amount || 0
-    existing.cost += t.cost_price || 0
-    existing.profit = existing.revenue - existing.cost
+    const existing = map.get(key) ?? { date: key, sales: 0, buyingCost: 0, profit: 0 }
+    existing.sales += t.amount || 0
+    existing.buyingCost += t.cost_price || 0
+    existing.profit = existing.sales - existing.buyingCost
     map.set(key, existing)
   }
   return [...map.values()].sort((a, b) => a.date.localeCompare(b.date))
 }
 
-export type BreakdownPoint = { name: string; revenue: number; profit: number }
+export type BreakdownPoint = { name: string; sales: number; profit: number; margin_pct: number }
 
 export function buildBreakdown(txns: Transaction[], key: 'category' | 'channel'): BreakdownPoint[] {
   const map = new Map<string, BreakdownPoint>()
   for (const t of txns) {
-    const name = t[key]
-    const existing = map.get(name) ?? { name, revenue: 0, profit: 0 }
-    existing.revenue += t.amount || 0
+    if (t.type !== 'sale') continue
+    const name = t[key] as string
+    const existing = map.get(name) ?? { name, sales: 0, profit: 0, margin_pct: 0 }
+    existing.sales += t.amount || 0
     existing.profit += (t.amount || 0) - (t.cost_price || 0)
     map.set(name, existing)
   }
-  return [...map.values()].sort((a, b) => b.revenue - a.revenue)
+  return [...map.values()]
+    .map((d) => ({
+      ...d,
+      sales: roundMoney(d.sales),
+      profit: roundMoney(d.profit),
+      margin_pct: d.sales > 0 ? Number(((d.profit / d.sales) * 100).toFixed(1)) : 0,
+    }))
+    .sort((a, b) => b.sales - a.sales)
 }
 
 export function formatCurrency(n: number, compact = false): string {

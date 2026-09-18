@@ -5,28 +5,40 @@ import type { Metrics } from '@/lib/types'
 import { formatCurrency, formatPct } from '@/lib/analytics'
 import { cn } from '@/lib/utils'
 
-type Trends = { revenue: number; profit: number; margin: number; volume: number }
+type Trends = { sales: number; profit: number; margin: number; volume: number }
 
 export function KpiCarousel({ metrics, trends }: { metrics: Metrics; trends: Trends }) {
   const cards = [
     {
-      label: 'Total Revenue',
-      value: formatCurrency(metrics.totalRevenue, true),
-      trend: trends.revenue,
+      label: 'Total Sales',
+      value: formatCurrency(metrics.sales, true),
+      trend: trends.sales,
       icon: Wallet,
     },
     {
-      label: 'Gross Profit',
-      value: formatCurrency(metrics.grossProfit, true),
+      label: 'Product Profit',
+      value: formatCurrency(metrics.productProfit, true),
       trend: trends.profit,
       icon: TrendingUp,
     },
     {
-      label: 'Profit Margin',
-      value: `${(metrics.profitMargin * 100).toFixed(1)}%`,
+      label: 'Profit %',
+      value: `${(metrics.profitPct * 100).toFixed(1)}%`,
       trend: trends.margin,
-      icon: Percent,
       trendIsPoints: true,
+      icon: Percent,
+    },
+    {
+      label: 'Business Expenses',
+      value: formatCurrency(metrics.expenses, true),
+      trend: 0,
+      icon: TrendingDown,
+    },
+    {
+      label: 'Net Profit',
+      value: formatCurrency(metrics.netProfit, true),
+      trend: trends.profit,
+      icon: Wallet,
     },
     {
       label: 'Transactions',

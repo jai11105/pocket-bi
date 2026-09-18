@@ -1,7 +1,9 @@
+export type TransactionType = 'sale' | 'purchase' | 'expense'
+
 export type Transaction = {
   record_id: string
   date: string // YYYY-MM-DD
-  type: string
+  type: TransactionType
   category: string
   item_name: string
   channel: string
@@ -12,12 +14,27 @@ export type Transaction = {
 }
 
 export type Metrics = {
-  totalRevenue: number
-  totalCost: number
-  grossProfit: number
-  profitMargin: number // 0..1
+  sales: number
+  buyingCost: number
+  productProfit: number
+  profitPct: number // 0..1
+  expenses: number
+  netProfit: number
   volume: number
   avgTransactionValue: number
+}
+
+export interface TransactionInput {
+  type: TransactionType
+  date: string
+  category: string
+  item_name: string
+  channel: string
+  quantity: number
+  buying_price?: number
+  selling_price?: number
+  amount?: number
+  notes: string
 }
 
 export type AiInsight = {

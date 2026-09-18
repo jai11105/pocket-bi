@@ -1,7 +1,8 @@
 'use client'
 
 import useSWR from 'swr'
-import type { DataResponse, Transaction } from './types'
+import type { DataResponse, Transaction, TransactionInput } from './types'
+import { calcTransactionTotals } from '@/lib/analytics'
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json())
 
@@ -10,8 +11,20 @@ export function useData() {
     revalidateOnFocus: false,
   })
 
-  async function addTransaction(input: Omit<Transaction, 'record_id'>) {
-    const optimistic: Transaction = { record_id: `TXN_pending`, ...input }
+  async function addTransaction(input: TransactionInput) {
+    const totals = calcTransactionTotals(input)
+    const optimistic: Transaction = {
+      record_id: `TXN_pending`,
+      date: input.date,
+      type: input.type,
+      category: input.category,
+      item_name: input.item_name,
+      channel: input.channel ?? '',
+      quantity: totals.quantity,
+      amount: totals.amount,
+      cost_price: totals.cost_price,
+      notes: input.notes ?? '',
+    }
     await mutate(
       async (current) => {
         await fetch('/api/data', {

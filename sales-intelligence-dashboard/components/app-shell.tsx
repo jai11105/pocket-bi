@@ -27,25 +27,27 @@ export function AppShell() {
     return {
       timeframe,
       metrics: {
-        total_revenue: Math.round(metrics.totalRevenue),
-        total_cost: Math.round(metrics.totalCost),
-        gross_profit: Math.round(metrics.grossProfit),
-        profit_margin_pct: Number((metrics.profitMargin * 100).toFixed(1)),
+        sales: Math.round(metrics.sales),
+        buyingCost: Math.round(metrics.buyingCost),
+        productProfit: Math.round(metrics.productProfit),
+        profitPct: Number((metrics.profitPct * 100).toFixed(1)),
+        business_expenses: Math.round(metrics.expenses),
+        net_profit: Math.round(metrics.netProfit),
         transaction_count: metrics.volume,
         avg_transaction_value: Math.round(metrics.avgTransactionValue),
       },
       trends_vs_previous_period_pct: computeTrends(transactions, timeframe),
       by_category: buildBreakdown(filtered, 'category').map((d) => ({
         name: d.name,
-        revenue: Math.round(d.revenue),
+        sales: Math.round(d.sales),
         profit: Math.round(d.profit),
-        margin_pct: d.revenue > 0 ? Number(((d.profit / d.revenue) * 100).toFixed(1)) : 0,
+        margin_pct: d.sales > 0 ? Number(((d.profit / d.sales) * 100).toFixed(1)) : 0,
       })),
       by_channel: buildBreakdown(filtered, 'channel').map((d) => ({
         name: d.name,
-        revenue: Math.round(d.revenue),
+        sales: Math.round(d.sales),
         profit: Math.round(d.profit),
-        margin_pct: d.revenue > 0 ? Number(((d.profit / d.revenue) * 100).toFixed(1)) : 0,
+        margin_pct: d.sales > 0 ? Number(((d.profit / d.sales) * 100).toFixed(1)) : 0,
       })),
     }
   }

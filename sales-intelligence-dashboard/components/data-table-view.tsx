@@ -19,7 +19,7 @@ type TableRow = {
   notes: string
 }
 
-type SortKey = 'date' | 'type' | 'category' | 'item_name' | 'channel' | 'quantity' | 'amount' | 'cost_price' | 'profit'
+type SortKey = 'date' | 'type' | 'category' | 'item_name' | 'channel' | 'quantity' | 'amount' | 'cost_price' | 'sales' | 'buyingCost' | 'profit' | 'neutralAmount'
 
 export function DataTableView({ transactions }: { transactions: Transaction[] }) {
   const [query, setQuery] = useState('')
@@ -38,16 +38,22 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
         (t.item_name ?? '').toLowerCase().includes(q) ||
         (t.channel ?? '').toLowerCase().includes(q),
     )
-    const withProfit = filtered.map((t) => ({ ...t, profit: t.amount - t.cost_price }))
-    withProfit.sort((a, b) => {
-      const av = a[sortKey]
-      const bv = b[sortKey]
+    const withValues = filtered.map((t) => {
+      const sales = t.type === 'sale' ? t.amount : 0
+      const buyingCost = (t.type === 'sale' || t.type === 'purchase') ? t.cost_price : 0
+      const profit = t.type === 'sale' ? t.amount - t.cost_price : 0
+      const neutralAmount = t.type === 'expense' ? t.amount : (t.type === 'purchase' ? t.cost_price : t.amount)
+      return { ...t, sales, buyingCost, profit, neutralAmount }
+    })
+    withValues.sort((a, b) => {
+      const av = a[sortKey] as number | string
+      const bv = b[sortKey] as number | string
       let cmp: number
       if (typeof av === 'number' && typeof bv === 'number') cmp = av - bv
       else cmp = String(av).localeCompare(String(bv))
       return dir === 'asc' ? cmp : -cmp
     })
-    return withProfit
+    return withValues
   }, [transactions, query, sortKey, dir])
 
   function toggleSort(key: SortKey) {
@@ -88,12 +94,13 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
                 <Th onClick={() => toggleSort('date')} active={sortKey === 'date'}>Date</Th>
                 <Th onClick={() => toggleSort('type')} active={sortKey === 'type'}>Type</Th>
                 <Th onClick={() => toggleSort('category')} active={sortKey === 'category'}>Category</Th>
-                <Th onClick={() => toggleSort('item_name')} active={sortKey === 'item_name'}>Item</Th>
+                <Th onClick={() => toggleSort('item_name')} active={sortKey === 'item_name'}>Product</Th>
                 <Th onClick={() => toggleSort('channel')} active={sortKey === 'channel'}>Channel</Th>
                 <Th onClick={() => toggleSort('quantity')} active={sortKey === 'quantity'} align="right">Qty</Th>
-                <Th onClick={() => toggleSort('amount')} active={sortKey === 'amount'} align="right">Amount</Th>
-                <Th onClick={() => toggleSort('cost_price')} active={sortKey === 'cost_price'} align="right">Cost</Th>
+                <Th onClick={() => toggleSort('sales')} active={sortKey === 'sales'} align="right">Sales</Th>
+                <Th onClick={() => toggleSort('buyingCost')} active={sortKey === 'buyingCost'} align="right">Buying Cost</Th>
                 <Th onClick={() => toggleSort('profit')} active={sortKey === 'profit'} align="right">Profit</Th>
+                <Th onClick={() => toggleSort('neutralAmount')} active={sortKey === 'neutralAmount'} align="right">Amount</Th>
               </tr>
             </thead>
             <tbody>
@@ -110,24 +117,31 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
                     {t.quantity}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-card-foreground">
-                    {formatCurrency(t.amount, true)}
+                    {t.type === 'sale' ? formatCurrency(t.sales, true) : '—'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-card-foreground">
-                    {formatCurrency(t.cost_price, true)}
+                    {t.type === 'sale' || t.type === 'purchase' ? formatCurrency(t.buyingCost, true) : '—'}
                   </td>
                   <td
                     className={cn(
                       'whitespace-nowrap px-3 py-2.5 text-right font-medium',
-                      t.profit >= 0 ? 'text-positive' : 'text-negative',
+                      t.type === 'sale'
+                        ? t.profit >= 0
+                          ? 'text-positive'
+                          : 'text-negative'
+                        : 'text-muted-foreground',
                     )}
                   >
-                    {formatCurrency(t.profit, true)}
+                    {t.type === 'sale' ? formatCurrency(t.profit, true) : '—'}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-muted-foreground">
+                    {formatCurrency(t.neutralAmount, true)}
                   </td>
                 </tr>
               ))}
               {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">
+                  <td colSpan={10} className="px-3 py-8 text-center text-muted-foreground">
                     No matching records.
                   </td>
                 </tr>
