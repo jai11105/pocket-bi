@@ -100,7 +100,7 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
                 <Th onClick={() => toggleSort('sales')} active={sortKey === 'sales'} align="right">Sales</Th>
                 <Th onClick={() => toggleSort('buyingCost')} active={sortKey === 'buyingCost'} align="right">Buying Cost</Th>
                 <Th onClick={() => toggleSort('profit')} active={sortKey === 'profit'} align="right">Profit</Th>
-                <Th onClick={() => toggleSort('neutralAmount')} active={sortKey === 'neutralAmount'} align="right">Amount</Th>
+                <Th onClick={() => toggleSort('neutralAmount')} active={sortKey === 'neutralAmount'} align="right">Expense Amount</Th>
               </tr>
             </thead>
             <tbody>
@@ -135,7 +135,7 @@ export function DataTableView({ transactions }: { transactions: Transaction[] })
                     {t.type === 'sale' ? formatCurrency(t.profit, true) : '—'}
                   </td>
                   <td className="whitespace-nowrap px-3 py-2.5 text-right font-medium text-muted-foreground">
-                    {formatCurrency(t.neutralAmount, true)}
+                    {t.type === 'expense' ? formatCurrency(t.neutralAmount, true) : '—'}
                   </td>
                 </tr>
               ))}
