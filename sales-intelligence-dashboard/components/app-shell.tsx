@@ -7,6 +7,7 @@ import {
   computeTrends,
   filterByTimeframe,
 } from '@/lib/analytics'
+import { analyzeBusiness, generateRCAReport, generateRecommendations } from '@/lib/ai-analytics'
 import type { Timeframe } from '@/lib/types'
 import { useData } from '@/lib/use-data'
 import { BottomDock, type TabKey } from './bottom-dock'
@@ -24,6 +25,9 @@ export function AppShell() {
   function buildCopilotContext() {
     const filtered = filterByTimeframe(transactions, timeframe)
     const metrics = computeMetrics(filtered)
+    const analysis = analyzeBusiness(transactions, timeframe)
+    const rca = generateRCAReport(analysis)
+    const recommendations = generateRecommendations(rca)
     return {
       timeframe,
       metrics: {
@@ -49,6 +53,8 @@ export function AppShell() {
         profit: Math.round(d.profit),
         margin_pct: d.sales > 0 ? Number(((d.profit / d.sales) * 100).toFixed(1)) : 0,
       })),
+      rca_findings: rca.findings,
+      recommendations: recommendations.recommendations,
     }
   }
 
