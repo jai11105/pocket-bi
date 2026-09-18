@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Database, RefreshCw } from 'lucide-react'
 import {
   buildBreakdown,
@@ -9,7 +9,7 @@ import {
   computeTrends,
   filterByTimeframe,
 } from '@/lib/analytics'
-import type { AiInsight, Timeframe, Transaction } from '@/lib/types'
+import type { AiInsight, Timeframe, Transaction, TransactionType } from '@/lib/types'
 import { BreakdownChart } from './breakdown-chart'
 import { InsightCard } from './insight-card'
 import { KpiCarousel } from './kpi-carousel'
@@ -33,12 +33,16 @@ export function DashboardView({
   onRefresh: () => void
   isLoading: boolean
 }) {
+  const [breakdownType, setBreakdownType] = useState<TransactionType>('sale')
   const filtered = useMemo(() => filterByTimeframe(transactions, timeframe), [transactions, timeframe])
   const metrics = useMemo(() => computeMetrics(filtered), [filtered])
   const trends = useMemo(() => computeTrends(transactions, timeframe), [transactions, timeframe])
   const series = useMemo(() => buildTimeSeries(filtered), [filtered])
-  const byCategory = useMemo(() => buildBreakdown(filtered, 'category'), [filtered])
-  const byChannel = useMemo(() => buildBreakdown(filtered, 'channel'), [filtered])
+  const byCategory = useMemo(() => buildBreakdown(filtered, 'category', breakdownType), [filtered, breakdownType])
+  const byChannel = useMemo(
+    () => (breakdownType === 'expense' ? [] : buildBreakdown(filtered, 'channel', breakdownType)),
+    [filtered, breakdownType],
+  )
 
   return (
     <div className="space-y-4">
@@ -71,7 +75,12 @@ export function DashboardView({
           <KpiCarousel metrics={metrics} trends={trends} />
           <InsightCard insight={aiInsight} />
           <TrendChart data={series} />
-          <BreakdownChart byCategory={byCategory} byChannel={byChannel} />
+          <BreakdownChart
+            byCategory={byCategory}
+            byChannel={byChannel}
+            breakdownType={breakdownType}
+            onBreakdownTypeChange={setBreakdownType}
+          />
         </>
       )}
     </div>

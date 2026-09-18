@@ -1,4 +1,4 @@
-import type { Metrics, Timeframe, Transaction, TransactionInput } from './types'
+import type { Metrics, Timeframe, Transaction, TransactionInput, TransactionType } from './types'
 
 export function roundMoney(n: number): number {
   const v = Number(n) || 0
@@ -133,14 +133,17 @@ export function buildTimeSeries(txns: Transaction[]): SeriesPoint[] {
 
 export type BreakdownPoint = { name: string; sales: number; profit: number; margin_pct: number }
 
-export function buildBreakdown(txns: Transaction[], key: 'category' | 'channel'): BreakdownPoint[] {
+export function buildBreakdown(txns: Transaction[], key: 'category' | 'channel', type: TransactionType = 'sale'): BreakdownPoint[] {
   const map = new Map<string, BreakdownPoint>()
   for (const t of txns) {
-    if (t.type !== 'sale') continue
+    if (t.type !== type) continue
     const name = t[key] as string
+    const amount = type === 'sale' || type === 'expense' ? t.amount || 0 : t.cost_price || 0
+    const costPrice = t.cost_price || 0
+    const profit = type === 'sale' ? (t.amount || 0) - costPrice : 0
     const existing = map.get(name) ?? { name, sales: 0, profit: 0, margin_pct: 0 }
-    existing.sales += t.amount || 0
-    existing.profit += (t.amount || 0) - (t.cost_price || 0)
+    existing.sales += amount
+    existing.profit += profit
     map.set(name, existing)
   }
   return [...map.values()]

@@ -1,12 +1,19 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { BreakdownPoint } from '@/lib/analytics'
 import { formatCurrency } from '@/lib/analytics'
+import type { TransactionType } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 const COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
+
+const BREAKDOWN_TYPES: { value: TransactionType; label: string }[] = [
+  { value: 'sale', label: 'Sales' },
+  { value: 'purchase', label: 'Purchases' },
+  { value: 'expense', label: 'Expenses' },
+]
 
 function BreakdownTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
@@ -33,19 +40,48 @@ function BreakdownTooltip({ active, payload }: any) {
 export function BreakdownChart({
   byCategory,
   byChannel,
+  breakdownType,
+  onBreakdownTypeChange,
 }: {
   byCategory: BreakdownPoint[]
   byChannel: BreakdownPoint[]
+  breakdownType: TransactionType
+  onBreakdownTypeChange: (type: TransactionType) => void
 }) {
   const [view, setView] = useState<'category' | 'channel'>('category')
+
+  useEffect(() => {
+    setView('category')
+  }, [breakdownType])
+
   const data = view === 'category' ? byCategory : byChannel
   const total = data.reduce((s, d) => s + d.sales, 0)
+  const typeLabel = BREAKDOWN_TYPES.find((t) => t.value === breakdownType)?.label ?? 'Breakdown'
+  const showChannelView = breakdownType === 'sale' || breakdownType === 'purchase'
 
   return (
     <div className="rounded-2xl border border-border/60 bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-card-foreground">Sales breakdown</h3>
+      <div className="mb-3 flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="text-sm font-semibold text-card-foreground">{typeLabel} breakdown</h3>
         <div className="inline-flex rounded-full border border-border/60 p-0.5 text-[11px] font-semibold">
+          {BREAKDOWN_TYPES.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              onClick={() => onBreakdownTypeChange(t.value)}
+              className={cn(
+                'rounded-full px-2.5 py-1 capitalize transition-colors',
+                breakdownType === t.value ? 'bg-primary text-primary-foreground' : 'text-muted-foreground',
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {showChannelView && (
+        <div className="mb-3 inline-flex rounded-full border border-border/60 p-0.5 text-[11px] font-semibold">
           {(['category', 'channel'] as const).map((v) => (
             <button
               key={v}
@@ -60,7 +96,7 @@ export function BreakdownChart({
             </button>
           ))}
         </div>
-      </div>
+      )}
 
       <div className="flex flex-col items-center gap-4 sm:flex-row">
         <div className="relative h-44 w-44 shrink-0">
